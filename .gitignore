@@ -9,5 +9,3 @@ net/
 *.jpeg
 *.jpg
 *.jar
-!/lib builds/
-!/lib builds/*.jar
