@@ -6,8 +6,9 @@ out/
 .idea/
 .DS_Store
 net/
-lib builds/
 IMG_7461.jpeg
 *.jpeg
 *.jpg
 *.jar
+!/lib builds/
+!/lib builds/*.jar
