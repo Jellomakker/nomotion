@@ -26,5 +26,10 @@
   },
   "suggests": {
     "modmenu": "*"
-  }
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/jello-api-1.0.0.jar"
+    }
+  ]
 }

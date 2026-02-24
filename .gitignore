@@ -12,3 +12,4 @@ IMG_7461.jpeg
 *.jar
 !/lib builds/
 !/lib builds/*.jar
+!/src/main/resources/META-INF/jars/*.jar
