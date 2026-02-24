@@ -1,6 +1,6 @@
 # Jello API
 
-A Fabric 1.21.5+ client-side shader/post-processing library inspired by [Satin](https://github.com/Ladysnake/Satin).
+A Fabric 1.21.5+ client-side shader/post-processing library.
 
 ## What it does
 

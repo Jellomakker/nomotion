@@ -7,8 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Jello API – a Fabric 1.21.5+ client library for post-processing shaders,
- * inspired by <a href="https://github.com/Ladysnake/Satin">Satin</a>.
+ * Jello API – a Fabric 1.21.5+ client library for post-processing shaders.
  *
  * <h2>Quick start</h2>
  * <pre>{@code
