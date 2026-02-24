@@ -13,6 +13,7 @@ base {
 repositories {
     maven { url = 'https://maven.terraformersmc.com/releases/' }
     mavenCentral()
+    flatDir { dirs 'lib builds' }
 }
 
 dependencies {
@@ -21,6 +22,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
     modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+    modCompileOnly files('lib builds/jello-api-1.0.0.jar')
 }
 
 tasks.withType(JavaCompile).configureEach {

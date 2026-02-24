@@ -3,7 +3,7 @@
   "id": "${mod_id}",
   "version": "${version}",
   "name": "Jello Blur",
-  "description": "Client-only motion blur mod for Fabric 1.21.8+. Accumulation & radial blur with configurable strength.",
+  "description": "Client-only frame accumulation motion blur for Fabric 1.21.5+",
   "authors": [
     "Jello"
   ],
@@ -18,15 +18,18 @@
       "com.jellomakker.nomotion.NomotionModMenu"
     ]
   },
-  "mixins": [
-    "nomotion.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=0.16.10",
-    "minecraft": ">=1.21.8",
-    "fabric-api": "*"
+    "minecraft": ">=1.21.5",
+    "fabric-api": "*",
+    "jello-api": "*"
   },
   "suggests": {
     "modmenu": "*"
-  }
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/jello-api-1.0.0.jar"
+    }
+  ]
 }

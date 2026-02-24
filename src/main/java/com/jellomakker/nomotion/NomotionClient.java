@@ -1,108 +1,74 @@
 package com.jellomakker.nomotion;
 
+import com.jellomakker.jello.api.event.ShaderEffectRenderCallback;
+import com.jellomakker.jello.api.managed.ManagedShaderEffect;
+import com.jellomakker.jello.api.managed.ShaderEffectManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.PostEffectProcessor;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.DefaultFramebufferSet;
-import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.util.Identifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * Jello Blur – Frame-accumulation & radial motion blur for Fabric 1.21.8+.
+ * Jello Blur – Frame-accumulation & radial motion blur for Fabric 1.21.5+.
  *
- * <p>Uses vanilla's {@link PostEffectProcessor} pipeline directly, following the
- * exact same pattern as {@code GameRenderer.renderBlur()} and spectator post-effects.
- * The shader is loaded from the {@link net.minecraft.client.gl.ShaderLoader} cache
- * every frame, which automatically handles resource reloads and resolution changes.
+ * <p>Uses Jello API's {@link ShaderEffectManager} to manage post-process shader
+ * lifecycle. The blur shader is registered via {@link ShaderEffectRenderCallback}.
  */
 public class NomotionClient implements ClientModInitializer {
 
     public static final String MOD_ID = "nomotion";
-    private static final Logger LOGGER = LoggerFactory.getLogger("JelloBlur");
 
     private static final NomotionConfig CONFIG = new NomotionConfig();
-
-    /** Set to true after the FIRST successful render, used for one-time log. */
-    private static boolean loggedSuccess = false;
-    /** Tracks the last effect ID that failed to load, prevents log spam. */
-    private static Identifier lastFailedId = null;
+    private static ManagedShaderEffect currentEffect = null;
+    private static String activeKey = "";
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("[JelloBlur] Initializing motion blur");
+        System.out.println("[NoMotion] Initializing motion blur with Jello API");
         CONFIG.load();
-    }
-
-    /**
-     * Called from {@code GameRendererMixin} after entity outlines are drawn.
-     * This is the same hook point vanilla uses for its own post-process effects.
-     *
-     * @param mc   the MinecraftClient instance
-     * @param pool the object allocator (GameRenderer's pool, or TRIVIAL as fallback)
-     */
-    public static void renderMotionBlur(MinecraftClient mc, ObjectAllocator pool) {
-        ClientPlayerEntity player = mc.player;
-        if (player == null || mc.getFramebuffer() == null) return;
-
-        // ── Should we render blur this frame? ─────────────────────────────
-        if (!CONFIG.isEnabled()) return;
-
-        if (CONFIG.isDisableInFluids() &&
-            (player.isSubmergedInWater() || player.isInLava())) {
-            return;
-        }
-
-        if (CONFIG.isOnlyWhenMoving()) {
-            double speed = player.getVelocity().horizontalLengthSquared();
-            boolean moving = speed > 0.0001;
-            boolean looking = player.lastYaw != player.getYaw()
-                           || player.lastPitch != player.getPitch();
-            if (!moving && !looking) return;
-        }
-
-        // ── Determine which shader to use ─────────────────────────────────
-        String prefix = CONFIG.getBlurType() == NomotionConfig.BlurType.RADIAL
-                      ? "radial" : "blur";
-        Identifier effectId = Identifier.of(MOD_ID, prefix + "_" + CONFIG.getStrength());
-
-        // ── Load from ShaderLoader cache & render ─────────────────────────
-        // This mirrors vanilla's approach in GameRenderer.render():
-        //   PostEffectProcessor p = mc.getShaderLoader().loadPostEffect(id, MAIN_ONLY);
-        //   if (p != null) p.render(framebuffer, pool);
-        try {
-            if (mc.getShaderLoader() == null) return;
-
-            PostEffectProcessor processor = mc.getShaderLoader()
-                .loadPostEffect(effectId, DefaultFramebufferSet.MAIN_ONLY);
-
-            if (processor == null) {
-                // Log once per unique failed ID
-                if (!effectId.equals(lastFailedId)) {
-                    LOGGER.warn("[JelloBlur] Failed to load post-effect: {}", effectId);
-                    lastFailedId = effectId;
+        ShaderEffectRenderCallback.EVENT.register(tickDelta -> {
+            MinecraftClient mc = MinecraftClient.getInstance();
+            ClientPlayerEntity player = mc.player;
+            boolean shouldRender = CONFIG.isEnabled();
+            if (shouldRender && player != null) {
+                if (CONFIG.isDisableInFluids() && (player.isSubmergedInWater() || player.isInLava())) {
+                    shouldRender = false;
+                }
+                if (shouldRender && CONFIG.isOnlyWhenMoving()) {
+                    double speed = player.getVelocity().horizontalLengthSquared();
+                    boolean moving = speed > 1.0E-4;
+                    boolean looking = player.lastYaw != player.getYaw()
+                            || player.lastPitch != player.getPitch();
+                    if (!moving && !looking) {
+                        shouldRender = false;
+                    }
+                }
+            }
+            if (!shouldRender) {
+                if (currentEffect != null) {
+                    ShaderEffectManager.getInstance().dispose(currentEffect);
+                    currentEffect = null;
+                    activeKey = "";
                 }
                 return;
             }
-
-            // Reset failure tracking on success
-            lastFailedId = null;
-
-            processor.render(mc.getFramebuffer(), pool != null ? pool : ObjectAllocator.TRIVIAL);
-
-            if (!loggedSuccess) {
-                LOGGER.info("[JelloBlur] Motion blur active: {}", effectId);
-                loggedSuccess = true;
+            int pct = CONFIG.getStrength();
+            NomotionConfig.BlurType type = CONFIG.getBlurType();
+            String prefix = type == NomotionConfig.BlurType.RADIAL ? "radial" : "blur";
+            String wantedKey = prefix + "_" + pct;
+            if (!wantedKey.equals(activeKey)) {
+                if (currentEffect != null) {
+                    ShaderEffectManager.getInstance().dispose(currentEffect);
+                }
+                currentEffect = ShaderEffectManager.getInstance().manage(
+                        Identifier.of(MOD_ID, wantedKey),
+                        effect -> System.out.println("[NoMotion] Shader loaded: " + wantedKey));
+                activeKey = wantedKey;
             }
-        } catch (Exception e) {
-            // Never crash the game — log and continue
-            if (!effectId.equals(lastFailedId)) {
-                LOGGER.error("[JelloBlur] Error rendering post-effect {}: {}", effectId, e.getMessage());
-                lastFailedId = effectId;
+            if (currentEffect != null) {
+                currentEffect.render(tickDelta);
             }
-        }
+        });
     }
 
     public static NomotionConfig getConfig() {
