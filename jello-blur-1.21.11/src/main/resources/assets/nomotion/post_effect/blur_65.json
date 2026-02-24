@@ -1,0 +1,56 @@
+{
+    "targets": {
+        "swap": {
+            "persistent": true
+        },
+        "temp": {}
+    },
+    "passes": [
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "nomotion:post/blur_accumulate",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "minecraft:main"
+                },
+                {
+                    "sampler_name": "PrevFrame",
+                    "target": "swap"
+                }
+            ],
+            "output": "temp",
+            "uniforms": {
+                "BlurParams": [
+                    {
+                        "name": "Strength",
+                        "type": "float",
+                        "value": 0.65
+                    }
+                ]
+            }
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "nomotion:post/simple_copy",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "temp"
+                }
+            ],
+            "output": "swap"
+        },
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "nomotion:post/simple_copy",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "temp"
+                }
+            ],
+            "output": "minecraft:main"
+        }
+    ]
+}

@@ -1,0 +1,25 @@
+{
+    "targets": {},
+    "passes": [
+        {
+            "vertex_shader": "minecraft:core/screenquad",
+            "fragment_shader": "nomotion:post/radial_blur",
+            "inputs": [
+                {
+                    "sampler_name": "In",
+                    "target": "minecraft:main"
+                }
+            ],
+            "output": "minecraft:main",
+            "uniforms": {
+                "BlurParams": [
+                    {
+                        "name": "Strength",
+                        "type": "float",
+                        "value": 0.2
+                    }
+                ]
+            }
+        }
+    ]
+}

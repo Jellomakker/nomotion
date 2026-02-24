@@ -1,30 +1,38 @@
-# nomotion
+# Jello Blur / Jello API
 
-Client-only Fabric mod for Minecraft 1.21.5+ that implements frame accumulation motion blur ("Option A") without Satin API.
+This repository contains the source code for the **Jello Blur** Minecraft mod and the **Jello API** shader library it's built on.
 
-## Features
+## Repository Structure
 
-- Post-process blur each frame via `GameRenderer.render` mixin.
-- Triple framebuffer pipeline:
-	- `historyA` (previous frame)
-	- `historyB` (current captured frame)
-	- `output` (blur result)
-- Resize-safe framebuffer recreation.
-- JSON config at `config/nomotion.json`.
-- Mod Menu integration with a config UI.
-
-## Build
-
-```bash
-./gradlew build
+```
+jello-api/             Jello API – standalone shader lifecycle library for Fabric 1.21.5+
+jello-blur-1.21.8/    Jello Blur mod – Fabric 1.21.8 (uses Jello API event system)
+jello-blur-1.21.11/   Jello Blur mod – Fabric 1.21.11 (uses vanilla ShaderLoader API directly)
 ```
 
-## Config
+## Building
 
-`config/nomotion.json` contains:
+### 1. Build and publish Jello API locally
 
-- `enabled`
-- `strength` (`0..1`)
-- `useDeltaTimeScaling`
-- `ignoreGuiScreens`
-- `historyResetOnWorldChange`
+```bash
+cd jello-api
+gradle publishToMavenLocal
+```
+
+### 2. Build Jello Blur
+
+```bash
+# For 1.21.8
+cd jello-blur-1.21.8
+gradle build
+
+# For 1.21.11
+cd jello-blur-1.21.11
+gradle build
+```
+
+Output JARs will be in each project's `build/libs/` folder.
+
+---
+
+See [jello-api/README.md](jello-api/README.md) for documentation on using Jello API in your own mods.
